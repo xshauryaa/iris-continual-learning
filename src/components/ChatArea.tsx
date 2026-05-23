@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Conversation } from '../types';
+import type { Conversation } from '../types';
 import MessageBubble from './MessageBubble';
 import InputBar from './InputBar';
 import styles from './ChatArea.module.css';
@@ -14,8 +14,6 @@ interface Props {
 export default function ChatArea({ conversation, onSend, onToggleSidebar, sidebarOpen }: Props) {
   const [waiting, setWaiting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  const lastRole = conversation.messages.at(-1)?.role;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

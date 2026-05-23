@@ -1,4 +1,4 @@
-import { Conversation } from '../types';
+import type { Conversation } from '../types';
 import styles from './Sidebar.module.css';
 
 interface Props {

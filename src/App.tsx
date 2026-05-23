@@ -1,6 +1,7 @@
 import { useReducer } from 'react';
-import { AppState, AppAction, Conversation, Message } from './types';
+import type { AppState, AppAction, Conversation, Message } from './types';
 import Sidebar from './components/Sidebar';
+import ChatArea from './components/ChatArea';
 import './App.css';
 
 const SEED_CONVERSATIONS: Conversation[] = [
@@ -80,7 +81,12 @@ export default function App() {
           onToggle={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
         />
       )}
-      {/* ChatArea goes here next */}
+      <ChatArea
+        conversation={activeConversation}
+        onSend={handleSend}
+        onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+        sidebarOpen={state.sidebarOpen}
+      />
     </div>
   );
 }
