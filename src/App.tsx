@@ -1,5 +1,6 @@
 import { useReducer } from 'react';
 import { AppState, AppAction, Conversation, Message } from './types';
+import Sidebar from './components/Sidebar';
 import './App.css';
 
 const SEED_CONVERSATIONS: Conversation[] = [
@@ -70,10 +71,16 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Sidebar and ChatArea will be wired here in later commits */}
-      <pre style={{ color: 'var(--text-secondary)', padding: 24, fontSize: 11 }}>
-        {JSON.stringify({ activeId: state.activeId, sidebarOpen: state.sidebarOpen, msgCount: activeConversation.messages.length }, null, 2)}
-      </pre>
+      {state.sidebarOpen && (
+        <Sidebar
+          conversations={state.conversations}
+          activeId={state.activeId}
+          onSelect={(id) => dispatch({ type: 'SELECT_CONVERSATION', id })}
+          onNew={() => dispatch({ type: 'NEW_CONVERSATION' })}
+          onToggle={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+        />
+      )}
+      {/* ChatArea goes here next */}
     </div>
   );
 }
