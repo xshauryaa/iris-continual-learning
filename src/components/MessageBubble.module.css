@@ -1,0 +1,53 @@
+.row {
+  display: flex;
+  animation: fadeIn 0.15s ease;
+}
+
+.rowUser {
+  justify-content: flex-end;
+}
+
+.rowIris {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 68%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubbleUser {
+  align-items: flex-end;
+}
+
+.bubbleIris {
+  align-items: flex-start;
+}
+
+.text {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubbleUser .text {
+  background: var(--accent-faint);
+  color: var(--text-primary);
+}
+
+.bubbleIris .text {
+  background: none;
+  color: var(--text-primary);
+  padding-left: 0;
+}
+
+.timestamp {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 0 2px;
+}
