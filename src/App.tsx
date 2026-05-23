@@ -1,122 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useReducer } from 'react';
+import { AppState, AppAction, Conversation, Message } from './types';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const SEED_CONVERSATIONS: Conversation[] = [
+  { id: '1', title: 'Project architecture review', messages: [] },
+  { id: '2', title: 'Debugging auth middleware', messages: [] },
+  { id: '3', title: 'Refactor data pipeline', messages: [] },
+  { id: '4', title: 'API rate limiting strategy', messages: [] },
+];
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+const initialState: AppState = {
+  conversations: SEED_CONVERSATIONS,
+  activeId: SEED_CONVERSATIONS[0].id,
+  sidebarOpen: true,
+};
 
-      <div className="ticks"></div>
+function reducer(state: AppState, action: AppAction): AppState {
+  switch (action.type) {
+    case 'SELECT_CONVERSATION':
+      return { ...state, activeId: action.id };
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+    case 'NEW_CONVERSATION': {
+      const id = String(Date.now());
+      const fresh: Conversation = { id, title: 'New conversation', messages: [] };
+      return {
+        ...state,
+        conversations: [fresh, ...state.conversations],
+        activeId: id,
+      };
+    }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    case 'ADD_MESSAGE': {
+      return {
+        ...state,
+        conversations: state.conversations.map((c) =>
+          c.id === state.activeId
+            ? { ...c, messages: [...c.messages, action.message] }
+            : c
+        ),
+      };
+    }
+
+    case 'TOGGLE_SIDEBAR':
+      return { ...state, sidebarOpen: !state.sidebarOpen };
+
+    default:
+      return state;
+  }
 }
 
-export default App
+function makeMessage(role: Message['role'], text: string): Message {
+  return { id: String(Date.now() + Math.random()), role, text, timestamp: new Date() };
+}
+
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const activeConversation = state.conversations.find((c) => c.id === state.activeId)!;
+
+  function handleSend(text: string) {
+    const userMsg = makeMessage('user', text);
+    dispatch({ type: 'ADD_MESSAGE', message: userMsg });
+
+    setTimeout(() => {
+      const irisMsg = makeMessage('iris', '[IRIS] Processing input — backend not yet connected.');
+      dispatch({ type: 'ADD_MESSAGE', message: irisMsg });
+    }, 600);
+  }
+
+  return (
+    <div className="app">
+      {/* Sidebar and ChatArea will be wired here in later commits */}
+      <pre style={{ color: 'var(--text-secondary)', padding: 24, fontSize: 11 }}>
+        {JSON.stringify({ activeId: state.activeId, sidebarOpen: state.sidebarOpen, msgCount: activeConversation.messages.length }, null, 2)}
+      </pre>
+    </div>
+  );
+}
