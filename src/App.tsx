@@ -1,5 +1,6 @@
-import { useReducer, useState } from 'react';
+import { useReducer, useState, useEffect } from 'react';
 import type { AppState, AppAction, Conversation, Message } from './types';
+import * as api from './api';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import NewConversationModal from './components/NewConversationModal';
@@ -13,6 +14,13 @@ const initialState: AppState = {
 
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
+    case 'SET_CONVERSATIONS':
+      return {
+        ...state,
+        conversations: action.conversations,
+        activeId: action.conversations[0]?.id ?? '',
+      };
+
     case 'SELECT_CONVERSATION':
       return { ...state, activeId: action.id };
 
@@ -23,16 +31,23 @@ function reducer(state: AppState, action: AppAction): AppState {
         activeId: action.conversation.id,
       };
 
-    case 'ADD_MESSAGE': {
+    case 'SET_MESSAGES':
       return {
         ...state,
         conversations: state.conversations.map((c) =>
-          c.id === state.activeId
+          c.id === action.conversationId ? { ...c, messages: action.messages } : c
+        ),
+      };
+
+    case 'ADD_MESSAGE':
+      return {
+        ...state,
+        conversations: state.conversations.map((c) =>
+          c.id === action.conversationId
             ? { ...c, messages: [...c.messages, action.message] }
             : c
         ),
       };
-    }
 
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarOpen: !state.sidebarOpen };
@@ -42,28 +57,59 @@ function reducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-function makeMessage(role: Message['role'], text: string): Message {
-  return { id: String(Date.now() + Math.random()), role, text, timestamp: new Date() };
+function optimisticMessage(role: Message['role'], text: string): Message {
+  return { id: `optimistic-${Date.now()}`, role, text, timestamp: new Date() };
 }
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loadedConversations, setLoadedConversations] = useState<Set<string>>(new Set());
 
   const activeConversation = state.conversations.find((c) => c.id === state.activeId);
 
-  function handleSend(text: string) {
-    const userMsg = makeMessage('user', text);
-    dispatch({ type: 'ADD_MESSAGE', message: userMsg });
+  // Load conversations on mount
+  useEffect(() => {
+    api.getConversations().then((conversations) => {
+      dispatch({ type: 'SET_CONVERSATIONS', conversations });
+    });
+  }, []);
 
-    setTimeout(() => {
-      const irisMsg = makeMessage('iris', '[IRIS] Processing input — backend not yet connected.');
-      dispatch({ type: 'ADD_MESSAGE', message: irisMsg });
+  // Load messages when active conversation changes
+  useEffect(() => {
+    if (!state.activeId || loadedConversations.has(state.activeId)) return;
+    api.getMessages(state.activeId).then((messages) => {
+      dispatch({ type: 'SET_MESSAGES', conversationId: state.activeId, messages });
+      setLoadedConversations((prev) => new Set(prev).add(state.activeId));
+    });
+  }, [state.activeId]);
+
+  async function handleSend(text: string) {
+    if (!state.activeId) return;
+    const conversationId = state.activeId;
+
+    // Optimistic user message
+    const optimisticUser = optimisticMessage('user', text);
+    dispatch({ type: 'ADD_MESSAGE', conversationId, message: optimisticUser });
+
+    // Persist user message, then refresh thread with server-assigned id
+    await api.postMessage(conversationId, 'user', text);
+    const messages = await api.getMessages(conversationId);
+    dispatch({ type: 'SET_MESSAGES', conversationId, messages });
+
+    setTimeout(async () => {
+      const irisText = '[IRIS] Processing input — backend not yet connected.';
+      const optimisticIris = optimisticMessage('iris', irisText);
+      dispatch({ type: 'ADD_MESSAGE', conversationId, message: optimisticIris });
+      await api.postMessage(conversationId, 'iris', irisText);
+      const updated = await api.getMessages(conversationId);
+      dispatch({ type: 'SET_MESSAGES', conversationId, messages: updated });
     }, 600);
   }
 
   function handleCreated(conversation: Conversation) {
-    dispatch({ type: 'ADD_CONVERSATION', conversation: { ...conversation, messages: [] } });
+    dispatch({ type: 'ADD_CONVERSATION', conversation });
+    setLoadedConversations((prev) => new Set(prev).add(conversation.id));
     setModalOpen(false);
   }
 

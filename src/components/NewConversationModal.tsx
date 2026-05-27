@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Conversation } from '../types';
+import { createConversation } from '../api';
 import styles from './NewConversationModal.module.css';
 
 interface Props {
@@ -23,19 +24,11 @@ export default function NewConversationModal({ onClose, onCreated }: Props) {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch('http://localhost:3000/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), condition, phase }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.errors?.join(' · ') ?? 'Something went wrong.');
-        return;
-      }
-      onCreated(data);
-    } catch {
-      setError('Could not reach the server.');
+      const conversation = await createConversation({ title: title.trim(), condition, phase });
+      onCreated(conversation);
+    } catch (err: unknown) {
+      const apiErr = err as { errors?: string[] };
+      setError(apiErr.errors?.join(' · ') ?? 'Could not reach the server.');
     } finally {
       setSubmitting(false);
     }
