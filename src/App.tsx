@@ -1,19 +1,13 @@
-import { useReducer } from 'react';
+import { useReducer, useState } from 'react';
 import type { AppState, AppAction, Conversation, Message } from './types';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import NewConversationModal from './components/NewConversationModal';
 import './App.css';
 
-const SEED_CONVERSATIONS: Conversation[] = [
-  { id: '1', title: 'Project architecture review', messages: [] },
-  { id: '2', title: 'Debugging auth middleware', messages: [] },
-  { id: '3', title: 'Refactor data pipeline', messages: [] },
-  { id: '4', title: 'API rate limiting strategy', messages: [] },
-];
-
 const initialState: AppState = {
-  conversations: SEED_CONVERSATIONS,
-  activeId: SEED_CONVERSATIONS[0].id,
+  conversations: [],
+  activeId: '',
   sidebarOpen: true,
 };
 
@@ -22,15 +16,12 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'SELECT_CONVERSATION':
       return { ...state, activeId: action.id };
 
-    case 'NEW_CONVERSATION': {
-      const id = String(Date.now());
-      const fresh: Conversation = { id, title: 'New conversation', messages: [] };
+    case 'ADD_CONVERSATION':
       return {
         ...state,
-        conversations: [fresh, ...state.conversations],
-        activeId: id,
+        conversations: [action.conversation, ...state.conversations],
+        activeId: action.conversation.id,
       };
-    }
 
     case 'ADD_MESSAGE': {
       return {
@@ -57,8 +48,9 @@ function makeMessage(role: Message['role'], text: string): Message {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const activeConversation = state.conversations.find((c) => c.id === state.activeId)!;
+  const activeConversation = state.conversations.find((c) => c.id === state.activeId);
 
   function handleSend(text: string) {
     const userMsg = makeMessage('user', text);
@@ -70,6 +62,11 @@ export default function App() {
     }, 600);
   }
 
+  function handleCreated(conversation: Conversation) {
+    dispatch({ type: 'ADD_CONVERSATION', conversation: { ...conversation, messages: [] } });
+    setModalOpen(false);
+  }
+
   return (
     <div className="app">
       {state.sidebarOpen && (
@@ -77,16 +74,30 @@ export default function App() {
           conversations={state.conversations}
           activeId={state.activeId}
           onSelect={(id) => dispatch({ type: 'SELECT_CONVERSATION', id })}
-          onNew={() => dispatch({ type: 'NEW_CONVERSATION' })}
+          onNew={() => setModalOpen(true)}
           onToggle={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
         />
       )}
-      <ChatArea
-        conversation={activeConversation}
-        onSend={handleSend}
-        onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-        sidebarOpen={state.sidebarOpen}
-      />
+      {activeConversation ? (
+        <ChatArea
+          conversation={activeConversation}
+          onSend={handleSend}
+          onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          sidebarOpen={state.sidebarOpen}
+        />
+      ) : (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+            Create a conversation to get started
+          </span>
+        </div>
+      )}
+      {modalOpen && (
+        <NewConversationModal
+          onClose={() => setModalOpen(false)}
+          onCreated={handleCreated}
+        />
+      )}
     </div>
   );
 }

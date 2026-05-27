@@ -15,7 +15,7 @@ export interface Conversation {
 
 export type AppAction =
   | { type: 'SELECT_CONVERSATION'; id: string }
-  | { type: 'NEW_CONVERSATION' }
+  | { type: 'ADD_CONVERSATION'; conversation: Conversation }
   | { type: 'ADD_MESSAGE'; message: Message }
   | { type: 'TOGGLE_SIDEBAR' };
 
