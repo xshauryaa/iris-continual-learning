@@ -21,7 +21,7 @@ The primary computational target is SLMs operating under real-world resource con
 ## Repository Structure
 
 ```
-selfware/
+iris-continual-learning/
 ├── frontend/          # React + Vite chat interface
 ├── backend/           # Express + Drizzle ORM API server
 │   ├── src/
