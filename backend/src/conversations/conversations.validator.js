@@ -1,17 +1,20 @@
-const CONDITIONS = ['treatment', 'baseline'];
-const PHASES = ['confirming', 'contradicting'];
+const CONDITIONS = ['confirming', 'contradicting'];
+const INSTANCES = ['treatment', 'baseline'];
 
 function validateCreateConversation(body) {
   const errors = [];
 
-  if (!body.title || typeof body.title !== 'string' || !body.title.trim()) {
-    errors.push('title is required and must be a non-empty string');
+  if (!body.belief_id || typeof body.belief_id !== 'string' || !body.belief_id.trim()) {
+    errors.push('belief_id is required and must be a non-empty string');
   }
   if (!body.condition || !CONDITIONS.includes(body.condition)) {
     errors.push(`condition is required and must be one of: ${CONDITIONS.join(', ')}`);
   }
-  if (!body.phase || !PHASES.includes(body.phase)) {
-    errors.push(`phase is required and must be one of: ${PHASES.join(', ')}`);
+  if (!body.instance || !INSTANCES.includes(body.instance)) {
+    errors.push(`instance is required and must be one of: ${INSTANCES.join(', ')}`);
+  }
+  if (!Number.isInteger(body.day) || body.day < 1) {
+    errors.push('day is required and must be a positive integer');
   }
 
   return { valid: errors.length === 0, errors };

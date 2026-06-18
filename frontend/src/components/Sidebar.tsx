@@ -58,7 +58,7 @@ export default function Sidebar({ conversations, activeId, onSelect, onNew, onTo
             className={`${styles.item} ${c.id === activeId ? styles.active : ''}`}
             onClick={() => onSelect(c.id)}
           >
-            <span className={styles.itemTitle}>{c.title}</span>
+            <span className={styles.itemTitle}>{c.belief_id} · Day {c.day}</span>
           </button>
         ))}
       </nav>

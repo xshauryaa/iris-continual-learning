@@ -9,22 +9,28 @@ interface Props {
 }
 
 export default function NewConversationModal({ onClose, onCreated }: Props) {
-  const [title, setTitle] = useState('');
-  const [condition, setCondition] = useState<'treatment' | 'baseline'>('treatment');
-  const [phase, setPhase] = useState<'confirming' | 'contradicting'>('confirming');
+  const [beliefId, setBeliefId] = useState('');
+  const [condition, setCondition] = useState<'confirming' | 'contradicting'>('confirming');
+  const [instance, setInstance] = useState<'treatment' | 'baseline'>('treatment');
+  const [day, setDay] = useState(1);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Title is required.');
+    if (!beliefId.trim()) {
+      setError('Belief ID is required.');
       return;
     }
     setError('');
     setSubmitting(true);
     try {
-      const conversation = await createConversation({ title: title.trim(), condition, phase });
+      const conversation = await createConversation({
+        belief_id: beliefId.trim(),
+        condition,
+        instance,
+        day,
+      });
       onCreated(conversation);
     } catch (err: unknown) {
       const apiErr = err as { errors?: string[] };
@@ -52,13 +58,13 @@ export default function NewConversationModal({ onClose, onCreated }: Props) {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>Title</span>
+            <span className={styles.label}>Belief ID</span>
             <input
               className={styles.input}
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Climate change discussion"
+              value={beliefId}
+              onChange={(e) => setBeliefId(e.target.value)}
+              placeholder="e.g. SM3, V1, E2"
               autoFocus
             />
           </label>
@@ -68,7 +74,19 @@ export default function NewConversationModal({ onClose, onCreated }: Props) {
             <select
               className={styles.select}
               value={condition}
-              onChange={(e) => setCondition(e.target.value as 'treatment' | 'baseline')}
+              onChange={(e) => setCondition(e.target.value as 'confirming' | 'contradicting')}
+            >
+              <option value="confirming">Confirming</option>
+              <option value="contradicting">Contradicting</option>
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Instance</span>
+            <select
+              className={styles.select}
+              value={instance}
+              onChange={(e) => setInstance(e.target.value as 'treatment' | 'baseline')}
             >
               <option value="treatment">Treatment</option>
               <option value="baseline">Baseline</option>
@@ -76,15 +94,14 @@ export default function NewConversationModal({ onClose, onCreated }: Props) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Phase</span>
-            <select
-              className={styles.select}
-              value={phase}
-              onChange={(e) => setPhase(e.target.value as 'confirming' | 'contradicting')}
-            >
-              <option value="confirming">Belief-Confirming</option>
-              <option value="contradicting">Belief-Contradicting</option>
-            </select>
+            <span className={styles.label}>Day</span>
+            <input
+              className={styles.input}
+              type="number"
+              min={1}
+              value={day}
+              onChange={(e) => setDay(parseInt(e.target.value, 10) || 1)}
+            />
           </label>
 
           {error && <p className={styles.error}>{error}</p>}

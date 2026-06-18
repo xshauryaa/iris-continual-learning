@@ -11,10 +11,10 @@ async function getConversationById(id) {
   return rows[0] ?? null;
 }
 
-async function createConversation({ title, condition, phase }) {
+async function createConversation({ belief_id, condition, instance, day }) {
   const rows = await db
     .insert(conversations)
-    .values({ title: title.trim(), condition, phase })
+    .values({ belief_id: belief_id.trim(), condition, instance, day })
     .returning();
   return rows[0];
 }

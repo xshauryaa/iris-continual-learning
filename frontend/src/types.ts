@@ -9,9 +9,10 @@ export interface Message {
 
 export interface Conversation {
   id: string;
-  title: string;
-  condition: 'treatment' | 'baseline';
-  phase: 'confirming' | 'contradicting';
+  belief_id: string;
+  condition: 'confirming' | 'contradicting';
+  instance: 'treatment' | 'baseline';
+  day: number;
   created_at: string;
   updated_at: string;
   messages: Message[];

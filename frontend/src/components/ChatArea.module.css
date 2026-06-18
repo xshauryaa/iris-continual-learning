@@ -35,6 +35,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+.turnCount {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
 .thread {

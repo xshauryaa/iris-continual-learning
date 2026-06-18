@@ -11,14 +11,15 @@ function mapMessage(raw: Record<string, string>): Message {
   };
 }
 
-function mapConversation(raw: Record<string, string>): Conversation {
+function mapConversation(raw: Record<string, unknown>): Conversation {
   return {
-    id: raw.id,
-    title: raw.title,
+    id: raw.id as string,
+    belief_id: raw.belief_id as string,
     condition: raw.condition as Conversation['condition'],
-    phase: raw.phase as Conversation['phase'],
-    created_at: raw.created_at,
-    updated_at: raw.updated_at,
+    instance: raw.instance as Conversation['instance'],
+    day: raw.day as number,
+    created_at: raw.created_at as string,
+    updated_at: raw.updated_at as string,
     messages: [],
   };
 }
@@ -31,9 +32,10 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function createConversation(body: {
-  title: string;
+  belief_id: string;
   condition: string;
-  phase: string;
+  instance: string;
+  day: number;
 }): Promise<Conversation> {
   const res = await fetch(`${BASE}/conversations`, {
     method: 'POST',
@@ -54,15 +56,13 @@ export async function getMessages(conversationId: string): Promise<Message[]> {
 
 export async function postMessage(
   conversationId: string,
-  role: 'user' | 'iris',
-  text: string,
-): Promise<Message> {
+  content: string,
+): Promise<{ response: string; turn_count: number }> {
   const res = await fetch(`${BASE}/conversations/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role: role === 'iris' ? 'assistant' : 'user', content: text }),
+    body: JSON.stringify({ content }),
   });
   if (!res.ok) throw new Error('Failed to send message');
-  const data = await res.json();
-  return mapMessage(data);
+  return res.json();
 }

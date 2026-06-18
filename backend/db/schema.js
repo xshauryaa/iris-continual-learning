@@ -1,10 +1,11 @@
-const { pgTable, uuid, text, timestamp } = require('drizzle-orm/pg-core');
+const { pgTable, uuid, text, integer, timestamp } = require('drizzle-orm/pg-core');
 
 const conversations = pgTable('conversations', {
   id:         uuid('id').primaryKey().defaultRandom(),
-  title:      text('title').notNull(),
-  condition:  text('condition').notNull(), // "treatment" | "baseline"
-  phase:      text('phase').notNull(),     // "confirming" | "contradicting"
+  belief_id:  text('belief_id').notNull(),
+  condition:  text('condition').notNull(),  // "confirming" | "contradicting"
+  instance:   text('instance').notNull(),   // "treatment" | "baseline"
+  day:        integer('day').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

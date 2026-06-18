@@ -6,12 +6,13 @@ import styles from './ChatArea.module.css';
 
 interface Props {
   conversation: Conversation;
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<void>;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
+  turnCount: number | null;
 }
 
-export default function ChatArea({ conversation, onSend, onToggleSidebar, sidebarOpen }: Props) {
+export default function ChatArea({ conversation, onSend, onToggleSidebar, sidebarOpen, turnCount }: Props) {
   const [waiting, setWaiting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -19,11 +20,16 @@ export default function ChatArea({ conversation, onSend, onToggleSidebar, sideba
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation.messages, waiting]);
 
-  function handleSend(text: string) {
+  async function handleSend(text: string) {
     setWaiting(true);
-    onSend(text);
-    setTimeout(() => setWaiting(false), 600);
+    try {
+      await onSend(text);
+    } finally {
+      setWaiting(false);
+    }
   }
+
+  const headerLabel = `${conversation.belief_id} · Day ${conversation.day} · ${conversation.condition} · ${conversation.instance}`;
 
   return (
     <div className={styles.area}>
@@ -35,7 +41,10 @@ export default function ChatArea({ conversation, onSend, onToggleSidebar, sideba
             </svg>
           </button>
         )}
-        <span className={styles.title}>{conversation.title}</span>
+        <span className={styles.title}>{headerLabel}</span>
+        {turnCount !== null && (
+          <span className={styles.turnCount}>Turn {turnCount}</span>
+        )}
       </header>
 
       <div className={styles.thread}>

@@ -1,11 +1,6 @@
-const ROLES = ['user', 'assistant'];
-
 function validateCreateMessage(body) {
   const errors = [];
 
-  if (!body.role || !ROLES.includes(body.role)) {
-    errors.push(`role is required and must be one of: ${ROLES.join(', ')}`);
-  }
   if (!body.content || typeof body.content !== 'string' || !body.content.trim()) {
     errors.push('content is required and must be a non-empty string');
   }

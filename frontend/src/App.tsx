@@ -65,51 +65,43 @@ export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [modalOpen, setModalOpen] = useState(false);
   const [loadedConversations, setLoadedConversations] = useState<Set<string>>(new Set());
+  const [turnCount, setTurnCount] = useState<number | null>(null);
 
   const activeConversation = state.conversations.find((c) => c.id === state.activeId);
 
-  // Load conversations on mount
   useEffect(() => {
     api.getConversations().then((conversations) => {
       dispatch({ type: 'SET_CONVERSATIONS', conversations });
     });
   }, []);
 
-  // Load messages when active conversation changes
   useEffect(() => {
     if (!state.activeId || loadedConversations.has(state.activeId)) return;
     api.getMessages(state.activeId).then((messages) => {
       dispatch({ type: 'SET_MESSAGES', conversationId: state.activeId, messages });
       setLoadedConversations((prev) => new Set(prev).add(state.activeId));
     });
+    setTurnCount(null);
   }, [state.activeId]);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string): Promise<void> {
     if (!state.activeId) return;
     const conversationId = state.activeId;
 
-    // Optimistic user message
     const optimisticUser = optimisticMessage('user', text);
     dispatch({ type: 'ADD_MESSAGE', conversationId, message: optimisticUser });
 
-    // Persist user message, then refresh thread with server-assigned id
-    await api.postMessage(conversationId, 'user', text);
+    const { turn_count } = await api.postMessage(conversationId, text);
+    setTurnCount(turn_count);
+
     const messages = await api.getMessages(conversationId);
     dispatch({ type: 'SET_MESSAGES', conversationId, messages });
-
-    setTimeout(async () => {
-      const irisText = '[IRIS] Processing input — backend not yet connected.';
-      const optimisticIris = optimisticMessage('iris', irisText);
-      dispatch({ type: 'ADD_MESSAGE', conversationId, message: optimisticIris });
-      await api.postMessage(conversationId, 'iris', irisText);
-      const updated = await api.getMessages(conversationId);
-      dispatch({ type: 'SET_MESSAGES', conversationId, messages: updated });
-    }, 600);
   }
 
   function handleCreated(conversation: Conversation) {
     dispatch({ type: 'ADD_CONVERSATION', conversation });
     setLoadedConversations((prev) => new Set(prev).add(conversation.id));
+    setTurnCount(0);
     setModalOpen(false);
   }
 
@@ -130,6 +122,7 @@ export default function App() {
           onSend={handleSend}
           onToggleSidebar={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
           sidebarOpen={state.sidebarOpen}
+          turnCount={turnCount}
         />
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
